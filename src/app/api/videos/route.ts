@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
     const files = await readdir(uploadsDir);
-    
+
     // Read active video configuration
     let activeVideoId = null;
     try {
@@ -15,9 +15,9 @@ export async function GET() {
       const config = JSON.parse(configData);
       activeVideoId = config.activeVideoId;
     } catch (error) {
-      console.log('No active video configuration found');
+      console.log('No active video configuration found', error);
     }
-    
+
     // Filter for video files and create video objects
     const videos = files
       .filter(file => file.match(/\.(mp4|webm|mov)$/i))

@@ -33,107 +33,176 @@ export default function Page() {
   const tickerRef = useRef<HTMLDivElement>(null)
   const [reloadCount, setReloadCount] = useState(0)
   const [videos, setVideos] = useState<Video[]>([])
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
   const [activeVideo, setActiveVideo] = useState<Video | null>(null)
 
+  // Fetch all data on mount
   useEffect(() => {
-    fetchWelcomeData()
-    fetchNewsData()
-    fetchVideos()
-  }, [])
+    const fetchWelcomeData = async () => {
+      try {
+        const response = await fetch("/api/guests");
+        const guests = await response.json();
+        if (Array.isArray(guests)) {
+          setWelcomeData({ id: 1, guests });
+        } else {
+          console.error("Unexpected guest data format", guests);
+        }
+      } catch (error) {
+        console.error("Error fetching welcome data", error);
+      }
+    };
 
+    const fetchNewsData = async () => {
+      try {
+        const response = await fetch("/api/news");
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          setNewsItems(data);
+        } else {
+          console.error("Invalid news data format", data);
+        }
+      } catch (error) {
+        console.error("Error fetching news data", error);
+      }
+    };
+
+    const fetchVideos = async () => {
+      try {
+        const videosResponse = await fetch("/api/videos");
+        const videosData = await videosResponse.json();
+        setVideos(videosData);
+
+        const activeConfigResponse = await fetch("/uploads/active-video.json");
+        if (activeConfigResponse.ok) {
+          const { activeVideoId } = await activeConfigResponse.json();
+          const active = videosData.find((v: Video) => v.id === activeVideoId) || videosData[0];
+          setActiveVideo(active);
+        } else {
+          setActiveVideo(videosData[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching videos:", error);
+        if (videos.length > 0) {
+          setActiveVideo(videos[0]);
+        }
+      }
+    };
+
+    fetchWelcomeData();
+    fetchNewsData();
+    fetchVideos();
+  }, []);
+
+  // Weather widget logic
   useEffect(() => {
-    loadWeatherWidget()
-  }, [reloadCount])
+    const loadWeatherWidget = () => {
+      const existingScript = document.querySelector("script[src='https://weatherwidget.io/js/widget.min.js']");
+      if (existingScript) existingScript.remove();
 
-  useEffect(() => {
-    if (videos.length <= 1) return;
+      const script = document.createElement("script");
+      script.src = "https://weatherwidget.io/js/widget.min.js";
+      script.async = true;
+      script.onload = () => console.log("Weather widget loaded successfully");
+      script.onerror = () => {
+        console.error("Weather widget failed to load, retrying...");
+        if (reloadCount < 3) {
+          setTimeout(() => setReloadCount((prev) => prev + 1), 5000);
+        }
+      };
+      document.body.appendChild(script);
+    };
 
-    const interval = setInterval(() => {
-      setCurrentVideoIndex((prev) => (prev + 1) % videos.length);
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [videos.length]);
-
-  const fetchWelcomeData = async () => {
-    try {
-      const response = await fetch("/api/guests");
-      const guests = await response.json();
-
-      if (Array.isArray(guests)) {
-        setWelcomeData({
-          id: 1,           // static ID
-          guests: guests,  // this is the full array of guest objects
-        });
-      } else {
-        console.error("Unexpected guest data format", guests);
-      }
-    } catch (error) {
-      console.error("Error fetching welcome data", error);
-    }
-  };
+    loadWeatherWidget();
+  }, [reloadCount]);
 
 
-  const fetchNewsData = async () => {
-    try {
-      const response = await fetch("/api/news");
-      const data = await response.json();
+  // useEffect(() => {
+  //   if (videos.length <= 1) return;
 
-      if (Array.isArray(data)) {
-        setNewsItems(data);
-      } else {
-        console.error("Invalid news data format", data);
-      }
-    } catch (error) {
-      console.error("Error fetching news data", error);
-    }
-  };
+  //   const interval = setInterval(() => {
+  //     setCurrentVideoIndex((prev) => (prev + 1) % videos.length);
+  //   }, 30000);
 
-  const fetchVideos = async () => {
-    try {
-      // Fetch videos
-      const videosResponse = await fetch('/api/videos');
-      const videosData = await videosResponse.json();
-      setVideos(videosData);
+  //   return () => clearInterval(interval);
+  // }, [videos.length]);
 
-      // Fetch active video configuration
-      const activeConfigResponse = await fetch('/uploads/active-video.json');
-      if (activeConfigResponse.ok) {
-        const { activeVideoId } = await activeConfigResponse.json();
-        const active = videosData.find((video: Video) => video.id === activeVideoId) || videosData[0];
-        setActiveVideo(active);
-      } else {
-        // If no active video config, use the first video
-        setActiveVideo(videosData[0]);
-      }
-    } catch (error) {
-      console.error('Error fetching videos:', error);
-      // If there are videos but error fetching config, use the first video
-      if (videos.length > 0) {
-        setActiveVideo(videos[0]);
-      }
-    }
-  };
+  // const fetchWelcomeData = async () => {
+  //   try {
+  //     const response = await fetch("/api/guests");
+  //     const guests = await response.json();
 
-  const loadWeatherWidget = () => {
-    const existingScript = document.querySelector("script[src='https://weatherwidget.io/js/widget.min.js']")
-    if (existingScript) {
-      existingScript.remove()
-    }
+  //     if (Array.isArray(guests)) {
+  //       setWelcomeData({
+  //         id: 1,           // static ID
+  //         guests: guests,  // this is the full array of guest objects
+  //       });
+  //     } else {
+  //       console.error("Unexpected guest data format", guests);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching welcome data", error);
+  //   }
+  // };
 
-    const script = document.createElement("script")
-    script.src = "https://weatherwidget.io/js/widget.min.js"
-    script.async = true
-    script.onload = () => console.log("Weather widget loaded successfully")
-    script.onerror = () => {
-      console.error("Weather widget failed to load, retrying...")
-      if (reloadCount < 3) {
-        setTimeout(() => setReloadCount((prev) => prev + 1), 5000)
-      }
-    }
-    document.body.appendChild(script)
-  }
+
+  // const fetchNewsData = async () => {
+  //   try {
+  //     const response = await fetch("/api/news");
+  //     const data = await response.json();
+
+  //     if (Array.isArray(data)) {
+  //       setNewsItems(data);
+  //     } else {
+  //       console.error("Invalid news data format", data);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching news data", error);
+  //   }
+  // };
+
+  // const fetchVideos = async () => {
+  //   try {
+  //     // Fetch videos
+  //     const videosResponse = await fetch('/api/videos');
+  //     const videosData = await videosResponse.json();
+  //     setVideos(videosData);
+
+  //     // Fetch active video configuration
+  //     const activeConfigResponse = await fetch('/uploads/active-video.json');
+  //     if (activeConfigResponse.ok) {
+  //       const { activeVideoId } = await activeConfigResponse.json();
+  //       const active = videosData.find((video: Video) => video.id === activeVideoId) || videosData[0];
+  //       setActiveVideo(active);
+  //     } else {
+  //       // If no active video config, use the first video
+  //       setActiveVideo(videosData[0]);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching videos:', error);
+  //     // If there are videos but error fetching config, use the first video
+  //     if (videos.length > 0) {
+  //       setActiveVideo(videos[0]);
+  //     }
+  //   }
+  // };
+
+  // const loadWeatherWidget = () => {
+  //   const existingScript = document.querySelector("script[src='https://weatherwidget.io/js/widget.min.js']")
+  //   if (existingScript) {
+  //     existingScript.remove()
+  //   }
+
+  //   const script = document.createElement("script")
+  //   script.src = "https://weatherwidget.io/js/widget.min.js"
+  //   script.async = true
+  //   script.onload = () => console.log("Weather widget loaded successfully")
+  //   script.onerror = () => {
+  //     console.error("Weather widget failed to load, retrying...")
+  //     if (reloadCount < 3) {
+  //       setTimeout(() => setReloadCount((prev) => prev + 1), 5000)
+  //     }
+  //   }
+  //   document.body.appendChild(script)
+  // }
 
 
   useEffect(() => {

@@ -52,17 +52,22 @@ export async function sendOTPEmail(email: string, otp: string) {
         stack: err.stack,
       });
     } else if (typeof err === 'object' && err !== null) {
+      const maybeError = err as Partial<{
+        message: string;
+        code: string;
+        command: string;
+        stack: string;
+      }>;
+
       console.error('Detailed email error (non-standard):', {
-        message: (err as any).message,
-        code: (err as any).code,
-        command: (err as any).command,
-        stack: (err as any).stack,
+        message: maybeError.message,
+        code: maybeError.code,
+        command: maybeError.command,
+        stack: maybeError.stack,
       });
     } else {
       console.error('Unknown error type:', err);
     }
-
     return false;
   }
-
 } 
