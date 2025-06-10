@@ -45,13 +45,24 @@ export async function sendOTPEmail(email: string, otp: string) {
     const info = await transporter.sendMail(mailOptions);
     console.log('Email sent successfully:', info);
     return true;
-  } catch (error: any) {
-    console.error('Detailed email error:', {
-      message: error?.message,
-      code: error?.code,
-      command: error?.command,
-      stack: error?.stack
-    });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error('Detailed email error:', {
+        message: err.message,
+        stack: err.stack,
+      });
+    } else if (typeof err === 'object' && err !== null) {
+      console.error('Detailed email error (non-standard):', {
+        message: (err as any).message,
+        code: (err as any).code,
+        command: (err as any).command,
+        stack: (err as any).stack,
+      });
+    } else {
+      console.error('Unknown error type:', err);
+    }
+
     return false;
   }
+
 } 

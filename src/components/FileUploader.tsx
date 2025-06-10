@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -41,28 +41,28 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     }
   };
 
-  const handleDelete = async (fileName: string) => {
-    try {
-      const response = await fetch('/api/upload/delete', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fileName }),
-      });
+  // const handleDelete = async (fileName: string) => {
+  //   try {
+  //     const response = await fetch('/api/upload/delete', {
+  //       method: 'DELETE',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ fileName }),
+  //     });
 
-      const data = await response.json();
+  //     const data = await response.json();
 
-      if (response.ok) {
-        toast.success('File deleted successfully');
-      } else {
-        toast.error(data.error || 'Failed to delete file');
-      }
-    } catch (error) {
-      toast.error('Error deleting file');
-      console.error('Delete error:', error);
-    }
-  };
+  //     if (response.ok) {
+  //       toast.success('File deleted successfully');
+  //     } else {
+  //       toast.error(data.error || 'Failed to delete file');
+  //     }
+  //   } catch (error) {
+  //     toast.error('Error deleting file');
+  //     console.error('Delete error:', error);
+  //   }
+  // };
 
   return (
     <Card>

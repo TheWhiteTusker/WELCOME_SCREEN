@@ -31,7 +31,6 @@ import {
   User,
   Eye,
   EyeOff,
-  Settings,
   Video,
 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -272,9 +271,14 @@ export default function AdminPanel() {
         const data = await res.json();
         throw new Error(data.error || "Failed to change password");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Password change error:", error);
-      toast.error(error.message || "Failed to change password");
+
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to change password");
+      }
     }
   };
 

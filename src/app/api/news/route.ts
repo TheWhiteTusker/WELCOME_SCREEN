@@ -4,7 +4,7 @@ import pool from '@/lib/db';
 
 export async function GET() {
   try {
-    const result = await pool.query('SELECT * FROM "news"'); // Capital N to match actual table
+    const result = await pool.query('SELECT * FROM "news"');
     return NextResponse.json(result.rows);
   } catch (err: any) {
     console.error('Error fetching news:', err);
